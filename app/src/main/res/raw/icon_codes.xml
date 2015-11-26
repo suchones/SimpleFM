@@ -1,0 +1,24 @@
+<Resource>
+    <array>
+
+        <item>
+            <id>so</id>
+            <id>txt</id>
+            <value>application_javascript.png</value>
+        </item>
+        <item>
+            <id>cpp</id>
+            <id>cxx</id>
+            <id>cc</id>
+            <id>jar</id>
+            <value>application_x_java.png</value>
+        </item>
+
+
+
+
+
+    </array>
+
+
+</Resource>
