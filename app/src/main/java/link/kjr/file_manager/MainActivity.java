@@ -3,6 +3,7 @@ package link.kjr.file_manager;
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -39,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     FileAdapter fa ;
-    IconProvider iconprovider;
     File rootfile=android.os.Environment.getRootDirectory();
     public void  setFile(File f){
         Log.i("file_app"," set file called");
@@ -52,30 +52,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        iconprovider = new IconProvider(this);
-        fa= new FileAdapter(this);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        GridView gv=(GridView)findViewById(R.id.main_view);
-        gv.setNumColumns(4);
+        startActivity(new Intent(this,TabsActivity.class));
 
 
-        final Context c = this;
-        final MainActivity ma=this;
-
-        gv.setAdapter(fa);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
     }
 
 
@@ -108,6 +87,5 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onp(MenuItem item) {
-        iconprovider.print();
     }
 }
