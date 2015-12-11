@@ -9,44 +9,60 @@ import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Scanner;
 
-/**
- * Created by kr on 11/25/15.
- */
 public class IconProvider {
     HashMap<String,String> db;
     Context c;
 
 
-    public int get_id(String suffix){
-
+    public int getDrawableIdforSuffix(String file_name){
+        String suffix=file_name.substring(file_name.lastIndexOf(".")+1,file_name.length());
         if(db.containsKey(suffix)){
-
-
             String fname=db.get(suffix);
             fname=fname.substring(0, fname.lastIndexOf("."));
-
-            Log.i(BuildConfig.APPLICATION_ID, "suffix:" + suffix + " db.get:" + fname);
             int identifer=c.getResources().getIdentifier("link.kjr.file_manager:drawable/"+fname,null,null);
             return identifer;
-
         }else{
-            return R.drawable.application_x_ruby;
+            return R.drawable.unknown;
         }
-
     }
 
 
     public IconProvider(Context context){
         c=context;
         db= new HashMap<>();
+        Scanner scan = null;
 
+            scan=new Scanner(context.getResources().openRawResource(R.raw.icon_codes_2));
+
+
+
+            while (scan.hasNext()) {
+                String filename=scan.next();
+
+                String v=scan.next();
+                while(!v.equals("\\")){
+                    db.put(v,filename);
+                    v=scan.next();
+                }
+
+
+            }
+
+
+
+
+
+        /*
         Log.i("file_manager","starting getIconForFile");
         XmlPullParser xmlp= Xml.newPullParser();
         try {
@@ -94,6 +110,7 @@ p.printStackTrace();
         }catch(IOException io){
 io.printStackTrace();
         }
+        */
 
 
 
@@ -101,7 +118,7 @@ io.printStackTrace();
 
     public void print() {
         for (Map.Entry<String, String> e : db.entrySet()) {
-            Log.i(BuildConfig.APPLICATION_ID, "key:" + e.getKey() + "_value:" + e.getValue());
+            Log.i(BuildConfig.APPLICATION_ID, "key:" + e.getKey() + " value:" + e.getValue());
         }
     }
 }
