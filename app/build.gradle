@@ -1,16 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-
-
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
-
-
+    compileSdkVersion 'Google Inc.:Google APIs:23'
+    buildToolsVersion '23.0.2'
 
     defaultConfig {
         applicationId "link.kjr.file_manager"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
