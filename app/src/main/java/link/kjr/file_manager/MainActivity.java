@@ -44,6 +44,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
 
     public void refresh(){
+        destroyCache();
         File dir = new File(currentPath);
         if(dir.exists()){
             setDirectoryView(dir.getAbsolutePath());

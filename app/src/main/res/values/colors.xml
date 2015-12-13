@@ -4,14 +4,14 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-    <color name="headerColor">#03a7ff</color>
-    <color name="text3Color">#03c8ff</color>
-    <color name="body1">#a4e9fd</color>
-    <color name="body2">#86bfcf</color>
-    <color name="item">#a5bdc4</color>
+    <color name="headerColor">#936b50</color>
+    <color name="text3Color">#ff9a51</color>
+    <color name="body1">#ffab6f</color>
+    <color name="body2">#9b7255</color>
+    <color name="item">#9b7255</color>
 
-    <color name="background_gradient_start">#000000</color>
-    <color name="background_gradient_end">#DDDDDD</color>
+    <color name="background_gradient_start">#ff4c1a</color>
+    <color name="background_gradient_end">#ff791a</color>
     <color name="fastlane_background">#0096a6</color>
     <color name="search_opaque">#ffaa3f</color>
     <color name="detail_background">#0096a6</color>

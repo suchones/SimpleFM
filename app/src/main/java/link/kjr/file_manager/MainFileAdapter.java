@@ -147,7 +147,9 @@ public class MainFileAdapter extends BaseAdapter{
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            iv.get().setImageBitmap(bitmap);
+            if(iv.get()!=null){
+                iv.get().setImageBitmap(bitmap);
+            }
         }
 
 
