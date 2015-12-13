@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="320dp"
+    >
+
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/titlebar_height"
+    android:background="@color/headerColor"
+    >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/titlebar_margin"
+        android:text="this is a directory..."
+        android:textSize="@dimen/titlebar_textsize"
+        android:id="@+id/title"
+        android:textColor="@color/black"
+        />
+
+</LinearLayout>
+
+
+
+
+
+
+</RelativeLayout>

@@ -1,16 +1,12 @@
 package link.kjr.file_manager;
 
-import android.app.Activity;
-import android.app.VoiceInteractor;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.provider.MediaStore;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -18,9 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.OptionalDataException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Created by kr on 12/11/15.
@@ -28,7 +23,7 @@ import java.util.HashMap;
 public class MainFileAdapter extends BaseAdapter{
 
     ArrayList<String> files= new ArrayList<>();
-    Act act;
+    MainActivity activity;
     int layoutid;
     public void ProcessDir(File f, String term, int depth){
         if (depth>=4){
@@ -48,17 +43,17 @@ public class MainFileAdapter extends BaseAdapter{
 
     }
 
-    static MainFileAdapter BuilderSearch(String term,Act act,int layoutid){
+    static MainFileAdapter BuilderSearch(String term,MainActivity activity,int layoutid){
         MainFileAdapter mfa= new MainFileAdapter();
-        mfa.act=act;
+        mfa.activity = activity;
         mfa.layoutid=layoutid;
         File f = new File("/");
         mfa.ProcessDir(f,term,0);
         return mfa;
     }
-    static MainFileAdapter BuilderDirectoryView(String path,Act act, int layoutid){
+    static MainFileAdapter BuilderDirectoryView(String path,MainActivity activity, int layoutid){
         MainFileAdapter mfa= new MainFileAdapter();
-        mfa.act=act;
+        mfa.activity = activity;
         File f = new File(path);
         mfa.layoutid=layoutid;
 
@@ -78,7 +73,7 @@ public class MainFileAdapter extends BaseAdapter{
 
 
     MainFileAdapter(){
-        Log.i(BuildConfig.APPLICATION_ID,"MainFileAdapter created");
+        Log.i(BuildConfig.APPLICATION_ID, "MainFileAdapter created");
     }
 
 
@@ -111,6 +106,18 @@ public class MainFileAdapter extends BaseAdapter{
         }
     }
 
+    public boolean isVideo(File f){
+        String file_name=f.getName();
+        String suffix=file_name.substring(file_name.lastIndexOf(".")+1,file_name.length());
+
+        switch (suffix){
+            case "mp4":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     @Override
     public long getItemId(int position) {
         return 0;
@@ -119,52 +126,82 @@ public class MainFileAdapter extends BaseAdapter{
 
     class BitmapLoader extends AsyncTask<Integer,Void,Bitmap>{
 
-        ImageView iv;
-        String path;
-        public BitmapLoader(ImageView iv, String path){
-            this.iv=iv;
-            this.path=path;
+        WeakReference<ImageView> iv;
+        WeakReference<String> path;
+        WeakReference<Boolean> type;
+        public BitmapLoader(ImageView iv, String path, boolean type){
+            this.iv= new WeakReference<>(iv);
+            this.type=new WeakReference<>(type);
+            this.path=new WeakReference<>(path);
         }
         @Override
         protected Bitmap doInBackground(Integer ... params){
-            return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(path),40,40,true);
+            if(type.get()){
+                return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(path.get()),40,40,true);
+            } else {
+                return android.media.ThumbnailUtils.createVideoThumbnail(path.get(), MediaStore.Images.Thumbnails.MICRO_KIND);
+
+            }
 
         }
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            iv.setImageBitmap(bitmap);
+            iv.get().setImageBitmap(bitmap);
         }
 
 
     }
 
+    public void setDrawable(ImageView icon,String path, File f){
+        if(f!=null && f.exists() && isImage(f)){
+            BitmapLoader bl= new BitmapLoader(icon,path,true);
+
+            bl.execute(4,5,6);
+        }else if(f!=null && f.exists() && isVideo(f)){
+            BitmapLoader bl= new BitmapLoader(icon,path,false);
+
+            bl.execute(4,5,6);
+
+        }
+        else if( f.isDirectory()){
+            icon.setImageDrawable(activity.getDrawable(R.drawable.folder));
+        }else if(f.canExecute()){
+            icon.setImageDrawable(activity.getDrawable(R.drawable.application_x_executable));
+
+        }else{
+            icon.setImageDrawable(activity.getDrawable(MainActivity.ip.getDrawableIdforSuffix(path)));
+
+        }
+    }
     public View FileView(String abspath){
 
 
         Log.e(BuildConfig.APPLICATION_ID,"LayoutResId:"+layoutid);
-        View rootView=act.getLayoutInflater().inflate(layoutid, null);
+        View rootView= activity.getLayoutInflater().inflate(layoutid, null);
 
-        if(layoutid==R.layout.rowitem){
+        if(layoutid==R.layout.row_item){
             TextView path=(TextView)rootView.findViewById(R.id.path);
             ImageView icon=(ImageView)rootView.findViewById(R.id.icon);
 
             path.setText(abspath);
 
-            icon.setImageDrawable(act.getDrawable(Act.ip.getDrawableIdforSuffix(abspath)));
+
+            File f=new File(abspath);
+            setDrawable(icon,abspath,f);
 
 
-            rootView.setBackgroundColor((act.FileIsSelected(abspath)) ? Color.MAGENTA : act.getBaseContext().getColor(R.color.body1));
+            rootView.setBackgroundColor((activity.FileIsSelected(abspath)) ? Color.MAGENTA : activity.getBaseContext().getColor(R.color.body1));
 
-            FileViewOnClickListener fvocl= new FileViewOnClickListener(abspath,act);
+            FileViewOnClickListener fvocl= new FileViewOnClickListener(abspath, activity);
             rootView.setOnClickListener(fvocl);
             rootView.setOnLongClickListener(fvocl);
 
-            Act.views.put(abspath, rootView);
+            MainActivity.views.put(abspath, rootView);
 
             return rootView;
         }
-        else if(layoutid==R.layout.griditem){
+        else if(layoutid==R.layout.grid_item){
 
 
             TextView filename=(TextView)rootView.findViewById(R.id.filename),
@@ -172,18 +209,7 @@ public class MainFileAdapter extends BaseAdapter{
             ImageView icon=(ImageView)rootView.findViewById(R.id.icon);
 
             File f=new File(abspath);
-            if(f!=null && f.exists() && isImage(f)){
-              BitmapLoader bl= new BitmapLoader(icon,abspath);
-
-                bl.execute(4,5,6);
-            }
-            else if( f.isDirectory()){
-                icon.setImageDrawable(act.getDrawable(R.drawable.inode_directory));
-            }else{
-                icon.setImageDrawable(act.getDrawable(Act.ip.getDrawableIdforSuffix(abspath)));
-
-            }
-
+            setDrawable(icon,abspath,f);
 
             filesize.setText(""+f.length());
             String filenametext=f.getName();
@@ -192,13 +218,13 @@ public class MainFileAdapter extends BaseAdapter{
             }
             filename.setText(filenametext);
 
-            rootView.setBackgroundColor((act.FileIsSelected(abspath)) ? Color.MAGENTA : act.getBaseContext().getColor(R.color.body1));
+            rootView.setBackgroundColor((activity.FileIsSelected(abspath)) ? Color.MAGENTA : activity.getBaseContext().getColor(R.color.body1));
 
-            FileViewOnClickListener fvocl= new FileViewOnClickListener(abspath,act);
+            FileViewOnClickListener fvocl= new FileViewOnClickListener(abspath, activity);
             rootView.setOnClickListener(fvocl);
             rootView.setOnLongClickListener(fvocl);
 
-            Act.views.put(abspath, rootView);
+            MainActivity.views.put(abspath, rootView);
 
             return rootView;
         }
@@ -209,9 +235,9 @@ public class MainFileAdapter extends BaseAdapter{
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         String path=files.get(position);
-        if (Act.views.containsKey(path) ){
+        if (MainActivity.views.containsKey(path) ){
             Log.e(BuildConfig.APPLICATION_ID, "returning cached view");
-            return Act.views.get(path);
+            return MainActivity.views.get(path);
         } else {
             Log.i(BuildConfig.APPLICATION_ID, "generating new view");
            return FileView(files.get(position));

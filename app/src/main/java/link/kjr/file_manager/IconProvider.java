@@ -23,7 +23,6 @@ public class IconProvider {
     HashMap<String,String> db;
     Context c;
 
-
     public int getDrawableIdforSuffix(String file_name){
         String suffix=file_name.substring(file_name.lastIndexOf(".")+1,file_name.length());
         if(db.containsKey(suffix)){
@@ -41,11 +40,7 @@ public class IconProvider {
         c=context;
         db= new HashMap<>();
         Scanner scan = null;
-
-            scan=new Scanner(context.getResources().openRawResource(R.raw.icon_codes_2));
-
-
-
+            scan=new Scanner(context.getResources().openRawResource(R.raw.icon_codes_3));
             while (scan.hasNext()) {
                 String filename=scan.next();
 
@@ -54,66 +49,7 @@ public class IconProvider {
                     db.put(v,filename);
                     v=scan.next();
                 }
-
-
             }
-
-
-
-
-
-        /*
-        Log.i("file_manager","starting getIconForFile");
-        XmlPullParser xmlp= Xml.newPullParser();
-        try {
-            xmlp.setInput(context.getResources().openRawResource(R.raw.icon_codes),null);
-            int xml_event_type=xmlp.getEventType();
-
-
-            String id="unset", value="";
-            ArrayList<String>ids = new ArrayList<>();
-            while(xml_event_type!=XmlPullParser.END_DOCUMENT){
-                if(xml_event_type==XmlPullParser.START_TAG) {
-                    String element_name = xmlp.getName() == null ? "" : xmlp.getName();
-
-                    if (element_name.equals("id")) {
-                        xml_event_type = xmlp.next();
-                        if (xml_event_type == XmlPullParser.TEXT && !xmlp.isWhitespace()) {
-                            id = xmlp.getText();
-                            if(id.equals("unset")){
-                                continue;
-                            }
-                            ids.add(id);
-                        }
-                        continue;
-                    }
-
-                    if (element_name.equals("value")) {
-                        xml_event_type = xmlp.next();
-                        if (xml_event_type == XmlPullParser.TEXT && !xmlp.isWhitespace()) {
-                            value = xmlp.getText();
-                            if(id.equals("unset")){
-                                continue;
-                            }
-                            for (String _id:ids){
-                                db.put(_id,value);
-                            }
-                            ids=new ArrayList<>();
-                        }
-                        continue;
-                    }
-                }
-                xml_event_type=xmlp.next();
-            }
-        }catch (org.xmlpull.v1.XmlPullParserException p){
-p.printStackTrace();
-        }catch(IOException io){
-io.printStackTrace();
-        }
-        */
-
-
-
     }
 
     public void print() {

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:title="copy selected files here"
+        android:onClick="copyFiles">
+
+    </item>
+    <item
+        android:title="move selected files here"
+        android:onClick="moveFiles">
+
+</item>
+    <item
+        android:title="delete selected files"
+        android:onClick="deleteFiles"
+        >
+
+    </item>
+
+    <item
+        android:title="unselect files"
+        android:onClick="unselectFiles">
+
+    </item>
+
+    <item
+        android:title="make directory"
+        android:onClick="mkdir">
+
+    </item>
+    <item
+
+        android:title="refresh"
+        android:onClick="refresh">
+
+    </item>
+
+
+
+
+</menu>
