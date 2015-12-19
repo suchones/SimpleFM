@@ -1,6 +1,5 @@
 package link.kjr.file_manager;
 
-import android.app.Activity;
 import android.test.InstrumentationTestCase;
 
 /**
@@ -27,7 +26,7 @@ public class OtherTest extends InstrumentationTestCase{
         }
     }
     public void test() throws Exception{
-        IconProvider ip= new IconProvider(getInstrumentation().getContext());
+        ThumbnailIdProvider ip= new ThumbnailIdProvider(getInstrumentation().getContext());
         ip.getDrawableIdforSuffix("jpg");
     }
 }

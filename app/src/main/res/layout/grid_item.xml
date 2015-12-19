@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:layout_marginBottom="10px"
-    android:layout_marginLeft="10px"
-    android:layout_marginTop="10px"
-    android:layout_marginRight="10px"
-    android:background="@color/item"
+android:background="@color/body"
 
-    android:paddingBottom="5px"
-    android:paddingTop="5px"
     >
 
 
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+android:orientation="vertical"
+android:id="@+id/internal"
+   android:layout_margin="3dp"
 
+    android:background="@color/item"
+
+
+    >
     <ImageView
         android:layout_width="80dp"
         android:layout_height="80dp"
@@ -26,7 +30,7 @@
         android:id="@+id/filename"
         android:layout_below="@id/icon"
         android:text="filename"
-    />
+        />
     <TextView
         android:layout_below="@id/filename"
         android:layout_width="wrap_content"
@@ -35,6 +39,9 @@
         android:text="filesize"
         />
 
+
+
+</LinearLayout>
 
 
 

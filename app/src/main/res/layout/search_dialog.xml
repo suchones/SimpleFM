@@ -22,12 +22,10 @@
             android:background="@color/headerColor"
 
             android:id="@+id/searchdialogtextview"
-            android:text="Enter search term"
+            android:text="@string/enter_search_term"
             />
 
 
-            android:layout_height="wrap_content"
-            android:text="cancel"/>
     </LinearLayout>
 
 
@@ -52,18 +50,18 @@
 
         <Button
 
-            android:onClick="searchfiles"
+            android:onClick="search_for_files"
             android:id="@+id/buttonconfrim2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="submit"/>
+            android:text="@string/submit"/>
         <Button
             android:onClick="dismiss"
             android:id="@+id/buttonreject2"
             android:layout_toRightOf="@id/buttonconfrim2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="cancel"/>
+            android:text="@string/cancel"/>
     </LinearLayout>
 
 </RelativeLayout>

@@ -30,7 +30,7 @@
             android:scaleType="fitXY"
             android:background="@color/headerColor"
 
-            android:onClick="onSeachClicked"
+            android:onClick="onSearchClicked"
             android:id="@+id/item_search">
 
 
@@ -70,39 +70,59 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:choiceMode="singleChoice"
-        android:background="@color/colorPrimary">
+        android:background="@color/body">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_margin="10dp"
-            android:background="@color/body2"
+            android:layout_marginTop="10dp"
+            android:background="@color/item"
             android:textSize="35dp"
-            android:text="Downloads"
+            android:text="@string/downloads"
             android:onClick="clickDownloads"
             />
         <TextView
-            android:layout_margin="10dp"
-            android:background="@color/body2"
+            android:layout_marginTop="10dp"
+            android:background="@color/item"
 
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:textSize="35dp"
-            android:text="Pictures"
+            android:text="@string/pictures"
             android:onClick="clickPictures"
             />
         <TextView
-            android:layout_margin="10dp"
-            android:background="@color/body2"
+            android:layout_marginTop="10dp"
+            android:background="@color/item"
 
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:textSize="35dp"
-            android:text="Root"
+            android:text="@string/root"
             android:onClick="clickRoot"
 
             />
+        <TextView
+            android:layout_marginTop="10dp"
+            android:background="@color/item"
 
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:textSize="35dp"
+            android:text="@string/dcim"
+            android:onClick="clickDCIM"
+            />
+        <TextView
+            android:layout_marginTop="10dp"
+            android:background="@color/item"
+
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:textSize="35dp"
+            android:text="@string/music"
+            android:onClick="clickMusic"
+
+            />
 
     </LinearLayout>
 

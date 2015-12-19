@@ -24,7 +24,9 @@ public class FileViewOnClickListener implements View.OnClickListener ,View.OnLon
             activity.setDirectoryView(f.getAbsolutePath());
         }else {
             activity.selectFileWithView(path,v);
-            v.setBackgroundColor(activity.FileIsSelected(path) ? Color.MAGENTA : v.getContext().getColor(R.color.body2));
+
+
+            v.findViewById(R.id.internal).setBackgroundColor(activity.FileIsSelected(path) ? Color.MAGENTA :activity.getResources().getColor(R.color.item));
         }
     }
 

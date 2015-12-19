@@ -1,25 +1,13 @@
 package link.kjr.file_manager;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.util.Log;
-import android.util.Pair;
-import android.util.Xml;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
-public class IconProvider {
+public class ThumbnailIdProvider {
     HashMap<String,String> db;
     Context c;
 
@@ -36,7 +24,7 @@ public class IconProvider {
     }
 
 
-    public IconProvider(Context context){
+    public ThumbnailIdProvider(Context context){
         c=context;
         db= new HashMap<>();
         Scanner scan = null;

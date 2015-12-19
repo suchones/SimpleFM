@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="@dimen/titlebar_margin"
-        android:text="this is a directory..."
+        android:text="@string/open_directory_dialog_title"
         android:textSize="@dimen/titlebar_textsize"
         android:id="@+id/title"
         android:textColor="@color/black"

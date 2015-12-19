@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.BitmapFactory;
 import android.provider.MediaStore;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -12,9 +13,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 
 /**
@@ -28,16 +31,16 @@ public class Factory {
 
             View view = activity.getLayoutInflater().inflate(R.layout.alert_on_directory_layout,null);
             TextView title=(TextView)view.findViewById(R.id.title);
-            title.setText("delete " + file.getName());
+            title.setText(activity.getString(R.string.delete )+ file.getName());
 
             AlertDialog.Builder b= new AlertDialog.Builder(activity);
-            b.setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+            b.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     activity.deleteDir(file.getAbsolutePath());
                 }
             });
-            b.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            b.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
 
@@ -53,6 +56,8 @@ public class Factory {
             View view= activity.getLayoutInflater().inflate(R.layout.alert_on_file_dialog_layout, null);
             Button openbutton=(Button)view.findViewById(R.id.move_button);
             Button deletebutton=(Button)view.findViewById(R.id.deletebutton);
+            Button sendbutton=(Button)view.findViewById(R.id.sendbutton);
+
             FrameLayout frameLayout=(FrameLayout)view.findViewById(R.id.body);
             TextView title =(TextView)view.findViewById(R.id.title);
             title.setText(file.getName());
@@ -82,6 +87,15 @@ public class Factory {
                 });
 
             }
+            if(sendbutton!=null){
+                sendbutton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        activity.sendSingleFile(path);
+                    }
+                });
+
+            }
             String suffix=path.substring(path.lastIndexOf(".") + 1, path.length());
             View preview= new TextView(activity);
             switch (suffix){
@@ -98,6 +112,7 @@ public class Factory {
                     iv1.setImageBitmap(BitmapFactory.decodeFile(path));
                     preview= iv1;
                     break;
+
                 case "txt":
                 case "conf":
                 case "py":
@@ -111,24 +126,34 @@ public class Factory {
                     Log.e(BuildConfig.APPLICATION_ID,"generating Textview");
                     TextView tv = new TextView(activity);
 
-                    try {
-                        Reader r= new FileReader(path);
-                        char h[] = new char[700];
-                        r.read(h);
-                        String s= String.copyValueOf(h);
-                        tv.setText(s);
 
 
-                    }catch (FileNotFoundException fnfe){
-                        fnfe.printStackTrace();
-                    }catch (IOException ioe){
-                        ioe.printStackTrace();
-                    }
+                        try {
+
+                            InputStream is= new FileInputStream(file);
+                            String li = "";
+                            byte []data= new byte[1024];
+                            int length;
+                            length=is.read(data,0,1024);
+                            while(length>0){
+                                Log.e(BuildConfig.APPLICATION_ID,li);
+                                li+=(new String(data));
+                                length=is.read(data,0,1024);
+                            }
+
+                            tv.setText(li);
+                        } catch (IOException ioe){
+                            ioe.printStackTrace();
+                        }
+
+                        tv.setMovementMethod(new ScrollingMovementMethod());
+
+
                     preview= tv;
                     break;
                 default:
                     TextView tv1 = new TextView(activity);
-                    tv1.setText("there is no preview");
+                    tv1.setText(R.string.there_is_no_preview);
                     preview= tv1;
                     break;
             }

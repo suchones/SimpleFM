@@ -4,11 +4,12 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-    <color name="headerColor">#936b50</color>
-    <color name="text3Color">#ff9a51</color>
-    <color name="body1">#ffab6f</color>
-    <color name="body2">#9b7255</color>
-    <color name="item">#9b7255</color>
+
+    <color name="statusbar">#c0ca33</color>
+    <color name="headerColor">#d4e157</color>
+    <color name="text3Color">#e6ee9c</color>
+    <color name="body">#dce775</color>
+    <color name="item">#f9fbe7</color>
 
     <color name="background_gradient_start">#ff4c1a</color>
     <color name="background_gradient_end">#ff791a</color>

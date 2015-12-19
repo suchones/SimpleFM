@@ -3,38 +3,27 @@
     android:layout_width="match_parent" android:layout_height="match_parent">
 
 
+
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/titlebar_height"
-        android:orientation="horizontal"
-        android:id="@+id/titlebar"
         android:background="@color/headerColor"
         >
-
-
         <TextView
-            android:layout_width="170dp"
-            android:layout_margin="@dimen/titlebar_margin"
-            android:textSize="@dimen/titlebar_textsize"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:background="@color/headerColor"
-
+            android:layout_margin="@dimen/titlebar_margin"
+            android:text="@string/open_directory_dialog_title"
+            android:textSize="@dimen/titlebar_textsize"
             android:id="@+id/title"
-            android:text="@string/mkdir_title"
+            android:textColor="@color/black"
             />
-
-
 
     </LinearLayout>
 
 
-    <EditText
-        android:layout_below="@id/titlebar"
-        android:id="@+id/searchdialogedittext"
-        android:autoText="true"
 
-        android:layout_width="match_parent"
-        android:layout_height="46dp" />
+
 
 </RelativeLayout>

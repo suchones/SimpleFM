@@ -5,13 +5,16 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,27 +27,40 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.WeakHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 
-public class MainActivity extends ActionBarActivity  implements View.OnClickListener,AdapterView.OnItemClickListener {
+public class MainActivity extends ActionBarActivity  implements AdapterView.OnItemClickListener {
+
+
 
 
 
     ArrayList<View> selectedFileViews;
     ArrayList<String> selectedFiles;
-    static WeakHashMap<String,View> views= new WeakHashMap<>();
-    static IconProvider ip;
+    static ImageCache imageCache;
+    static ThumbnailIdProvider ip;
     String currentPath;
     ArrayList<String> p;
     AlertDialog.Builder ab;
     AlertDialog ad;
+    android.os.Handler handler;
 
+    static String getSuffix(String path){
+        return  path.substring(path.lastIndexOf(".")+1,path.length());
+
+    }
 
     public void refresh(){
-        destroyCache();
         File dir = new File(currentPath);
         if(dir.exists()){
             setDirectoryView(dir.getAbsolutePath());
@@ -64,34 +80,38 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public void openfile(String path){
         Intent i= new Intent();
 
+        String suffix=getSuffix(path);
+        if(suffix.equals("zip") || suffix.equals("apk") || suffix.equals("jar")){
+            try{
+                decompressZipFile(path);
+
+            } catch (IOException ioe){
+                ioe.printStackTrace();
+            }
+
+            return;
+        }
+
+
         i.setAction(Intent.ACTION_VIEW);
-        String mimetype= MimeTypeMap.getSingleton().getMimeTypeFromExtension(path.substring(path.lastIndexOf(".")+1,path.length()));
+        String mimetype= MimeTypeMap.getSingleton().getMimeTypeFromExtension(path.substring(path.lastIndexOf(".") + 1, path.length()));
         if(mimetype!= null && mimetype.length()>2){
-            Log.e(BuildConfig.APPLICATION_ID,"mimetype "+mimetype+" for "+path);
-            i.setDataAndType(Uri.fromFile(new File(path)),mimetype);
-           startActivity(i);
+            Log.i(BuildConfig.APPLICATION_ID, "mimetype " + mimetype + " for " + path);
+            i.setDataAndType(Uri.fromFile(new File(path)), mimetype);
+            startActivity(i);
         }
 
 
     }
-    public void AddSelectedFile(String fname){
-        if (selectedFileViews==null){
-            selectedFileViews= new ArrayList<>();
-        }
 
 
-        if (selectedFiles.contains(fname)) {
-            selectedFiles.remove(fname);
-        }else {
-            selectedFiles.add(fname);
-
-        }
+    public void selectFileView(View v){
+        selectedFileViews.add(v);
     }
-
     public void deselectFiles(){
         selectedFiles= new ArrayList<>();
         for(View v:selectedFileViews){
-            v.setBackgroundColor(getColor(R.color.item));
+            v.findViewById(R.id.internal).setBackgroundColor(getResources().getColor(R.color.item));
         }
         selectedFileViews= new ArrayList<>();
     }
@@ -104,12 +124,10 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     }
 
 
-    boolean onSaveCalled=false;
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState){
-        onSaveCalled=true;
-        Log.e(BuildConfig.APPLICATION_ID, "onSaveInstance called");
+        Log.i(BuildConfig.APPLICATION_ID, "onSaveInstance called");
         savedInstanceState.putStringArrayList("tabs", p);
         savedInstanceState.putString("currentPath", currentPath);
         savedInstanceState.putStringArrayList("selectedFiles", selectedFiles);
@@ -119,10 +137,9 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState){
-        Log.e(BuildConfig.APPLICATION_ID, " onRestoreInstance called");
+        Log.i(BuildConfig.APPLICATION_ID, " onRestoreInstance called");
 
         ArrayList<String> s=savedInstanceState.getStringArrayList("selectedFiles");
-        onSaveCalled=false;
         if(s!=null){
             selectedFiles=s;
         }
@@ -143,35 +160,17 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public void onBackPressed(){
 
         Log.i(BuildConfig.APPLICATION_ID, "onBackPressed");
-        String newPath= currentPath.substring(0,currentPath.lastIndexOf("/"));
+        String newPath= currentPath.substring(0, currentPath.lastIndexOf("/"));
         if (newPath.equals("")){
             newPath="/";
         }
-
-            setDirectoryView(newPath);
+        setDirectoryView(newPath);
         refresh();
 
     }
-    public void destroyCache(){
-        views= new WeakHashMap<>();
-    }
-    public void flushCache(){
-        ArrayList<String> files=new ArrayList<>();
-        if(views.size()>200){
-            for (String  file:views.keySet()) {
-                files.add(file);
-            }
-        }
-        for (String  file:files) {
-            views.remove(file);
-        }
 
-    }
     public void setDirectoryView(Bundle b){
-        if(onSaveCalled){
-            Toast.makeText(this,"cannot change because onSave was called",Toast.LENGTH_SHORT).show();
-        }
-        flushCache();
+
         currentPath=b.getString("path");
         TextView addressbar=(TextView)findViewById(R.id.addressbar);
         addressbar.setText(new File(b.getString("path")).getName());
@@ -195,21 +194,28 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        onSaveCalled=false;
-        destroyCache();
-
-
+        imageCache= new ImageCache(600);
+        selectedFiles= new ArrayList<>();
+        selectedFileViews= new ArrayList<>();
+        handler= new android.os.Handler(getMainLooper());
         setContentView(R.layout.main_layout);
-        if(!(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE )==PackageManager.PERMISSION_GRANTED &&
-                this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED )){
+
+        /*
+        if (BuildConfig.VERSION_CODE== Build.VERSION_CODES.M){
+            if(!(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE )==PackageManager.PERMISSION_GRANTED &&
+                    this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED )){
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},9);
 
-        }
+            }
+        }/**/
+
+
+        getWindow().setStatusBarColor(getResources().getColor(R.color.statusbar));
         Log.i(BuildConfig.APPLICATION_ID, "printing db");
 
 
         selectedFiles=new ArrayList<>();
-        ip= new IconProvider(this);
+        ip= new ThumbnailIdProvider(this);
 
         ip.print();
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
@@ -220,23 +226,21 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         currentPath="/";
     }
 
-    public void directoryChanged(File dir) {
-        if(onSaveCalled){
-            return;
-        }
-        setDirectoryView(dir.getAbsolutePath());
-    }
-
-
-    public void selectFile(String path) {
-        AddSelectedFile(path);
-        Snackbar sb=Snackbar.make(findViewById(R.id.drawer_layout), "there are " + selectedFiles.size() + " files selected", Snackbar.LENGTH_SHORT);
-        sb.show();
-    }
 
     public void selectFileWithView(String path, View v) {
-        selectFile(path);
-        selectedFileViews.add(v);
+        if (selectedFiles.contains(path)){
+            selectedFileViews.remove(v);
+            selectedFiles.remove(path);
+        }else{
+            selectedFiles.add(path);
+            if(v!=null){
+                selectedFileViews.add(v);
+            }
+        }
+
+
+        Snackbar sb=Snackbar.make(findViewById(R.id.drawer_layout), "there are " + selectedFiles.size() + " files selected", Snackbar.LENGTH_SHORT);
+        sb.show();
     }
 
     public boolean FileIsSelected(String path) {
@@ -246,12 +250,12 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        Log.e(BuildConfig.APPLICATION_ID, "onItemclick called but not an etv");
+        Log.i(BuildConfig.APPLICATION_ID, "onItemclick called but not an etv");
 
     }
 
 
-    public void onSeachClicked(View view) {
+    public void onSearchClicked(View view) {
 
         ab= new AlertDialog.Builder(this);
         View seachdialogview=getLayoutInflater().inflate(R.layout.search_dialog, null);
@@ -267,7 +271,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     }
 
 
-    public void searchfiles(View view) {
+    public void search_for_files(View view) {
 
         Bundle b= new Bundle();
         b.putString("path", "/");
@@ -280,7 +284,7 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
             b.putString("term", ((EditText) view1).getText().toString());
         }
         else {
-            Log.e(BuildConfig.APPLICATION_ID,"could not get search term");
+            Log.i(BuildConfig.APPLICATION_ID, "could not get search term");
             b.putString("term","xml");
         }
 
@@ -291,18 +295,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     public void postMessage(String msg){
         Snackbar.make(findViewById(R.id.drawer_layout), msg, Snackbar.LENGTH_SHORT).show();
     }
-
-    @Override
-    public void onClick(View v) {
-
-    }
-
-    public void open(View view) {
-
-
-    }
     public void deleteDir(String path){
-        Log.e(BuildConfig.APPLICATION_ID, "will delete dir");
+        Log.i(BuildConfig.APPLICATION_ID, "will delete dir");
             try {
                 Runtime.getRuntime().exec("rm " + path + " -Rf");
             } catch (IOException e) {
@@ -313,24 +307,34 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
     }
 
     public void clickDownloads(View view) {
-        String path=Environment.getDownloadCacheDirectory().getAbsolutePath();
+        String path=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).getAbsolutePath();
         setDirectoryView(path);
-        Log.e(BuildConfig.APPLICATION_ID, " set to Download");
+        Log.i(BuildConfig.APPLICATION_ID, " set to Download");
     }
 
     public void clickPictures(View view) {
-        String path=Environment.getDownloadCacheDirectory().getAbsolutePath();
+        String path=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).getAbsolutePath();
         setDirectoryView(path);
-        Log.e(BuildConfig.APPLICATION_ID, " set to Pictures");
+        Log.i(BuildConfig.APPLICATION_ID, " set to Pictures");
     }
 
     public void clickRoot(View view) {
         setDirectoryView("/");
-        Log.e(BuildConfig.APPLICATION_ID, " set to Root");
+        Log.i(BuildConfig.APPLICATION_ID, " set to Root");
+    }
+    public void clickDCIM(View view) {
+        String path=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)).getAbsolutePath();
+        setDirectoryView(path);
     }
 
-    public void deleteFiles(){
-        Log.e(BuildConfig.APPLICATION_ID, "will now delete files");
+    public void clickMusic(View view) {
+        String path=(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)).getAbsolutePath();
+        setDirectoryView(path);
+
+    }
+
+    public void deleteFiles(MainActivity activity){
+        Log.i(BuildConfig.APPLICATION_ID, "will now delete files");
 
         for (String s : selectedFiles) {
             try {
@@ -339,41 +343,47 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 e.printStackTrace();
             }
         }
+        activity.deselectFiles();
+        activity.refresh();
     }
     public void deleteFiles(MenuItem item) {
         if(selectedFiles==null || (selectedFiles.size()==0)){
-            Toast.makeText(this,"no files selected",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,R.string.no_files_selected,Toast.LENGTH_SHORT).show();
             return;
         }
         AlertDialog.Builder ab= new AlertDialog.Builder(this);
         View view=getLayoutInflater().inflate(R.layout.confirm_dialog,null);
         ((TextView)view.findViewById(R.id.title)).setText("Delete the following files:");
         ((TextView)view.findViewById(R.id.body)).setText(getSelectedFiles());
-
-        ab.setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+        final MainActivity activity=this;
+        ab.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                deleteFiles();
-                deselectFiles();
-                refresh();
+                deleteFiles(activity);
             }
         });
-        ab.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+        ab.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                refresh();
 
             }
         });
 
         ab.setView(view);
 
-        ab.create().show();
-
-
+        AlertDialog ad=ab.create();
+        ad.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                refresh();
+            }
+        });
+        ad.show();
     }
 
-    public void moveFiles(){
-        Log.e(BuildConfig.APPLICATION_ID, "will now move files");
+    public void moveFiles(MainActivity activity){
+        Log.i(BuildConfig.APPLICATION_ID, "will now move files");
         for (String s : selectedFiles) {
             try {
                 Runtime.getRuntime().exec("mv " + s + " " + currentPath + "/");
@@ -381,6 +391,8 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 e.printStackTrace();
             }
         }
+        activity.deselectFiles();
+        activity.refresh();
     }
     public void moveFiles(MenuItem item) {
         if(selectedFiles==null || (selectedFiles.size()==0)){
@@ -392,31 +404,36 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
         ((TextView)view.findViewById(R.id.title)).setText("move the following files to :"+currentPath);
         ((TextView)view.findViewById(R.id.body)).setText(getSelectedFiles());
 
-        ab.setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+        final  MainActivity activity=this;
+        ab.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                moveFiles();
-                deselectFiles();
-                refresh();
-
+                activity.handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        moveFiles(activity);
+                    }
+                });
             }
         });
-        ab.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+        ab.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
             }
         });
         ab.setView(view);
 
-        ab.create().show();
-
-        refresh();
-
+        AlertDialog ad=ab.create();
+        ad.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+            }
+        });
+        ad.show();
     }
 
-    public void copyFiles(){
-        Log.e(BuildConfig.APPLICATION_ID, "will now copy files");
+    public void copyFiles(MainActivity activity){
+        Log.i(BuildConfig.APPLICATION_ID, "will now copy files");
         for (String s : selectedFiles) {
             try {
                 Runtime.getRuntime().exec("cp " + s + " " + currentPath);
@@ -424,46 +441,56 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
                 e.printStackTrace();
             }
         }
+        activity.deselectFiles();
+        activity.refresh();
     }
     public void copyFiles(MenuItem item) {
         if(selectedFiles==null || (selectedFiles.size()==0)){
-            Toast.makeText(this,"no files selected",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,R.string.no_files_selected,Toast.LENGTH_SHORT).show();
             return;
         }
-        AlertDialog ad=null;
         AlertDialog.Builder ab= new AlertDialog.Builder(this);
         View view=getLayoutInflater().inflate(R.layout.confirm_dialog,null);
-        ((TextView)view.findViewById(R.id.title)).setText("move the following files to :"+currentPath);
+        ((TextView)view.findViewById(R.id.title)).setText(R.string.move_selected_files_here+":"+currentPath);
         ((TextView)view.findViewById(R.id.body)).setText(getSelectedFiles());
-        ab.setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+        final MainActivity activity=this;
+        ab.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                copyFiles();
-
-                refresh();
+                activity.handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        copyFiles(activity);
+                        refresh();
+                    }
+                });
             }
         });
-        ab.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+        ab.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
+                refresh();
             }
         });
 
         ab.setView(view);
-
-        ad=ab.create();
+        AlertDialog ad=ab.create();
+        ad.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                refresh();
+            }
+        });
         ad.show();
-        refresh();
 
     }
 
-    public void unselectFiles(MenuItem item) {
+    public void deselectFiles(MenuItem item) {
         deselectFiles();
     }
 
 
-    public void mkdir(String dirpath){
+    public void mkdir(String dirpath,MainActivity activity){
         try {
 
             Runtime.getRuntime().exec("mkdir "+dirpath);
@@ -472,30 +499,32 @@ public class MainActivity extends ActionBarActivity  implements View.OnClickList
 
             e.printStackTrace();
         }
+        activity.refresh();
     }
 
     public void mkdir(MenuItem item) {
-        AlertDialog ad=null;
         AlertDialog.Builder ab= new AlertDialog.Builder(this);
         View view=getLayoutInflater().inflate(R.layout.mkdir_dialog,null);
         final EditText et=(EditText)view.findViewById(R.id.searchdialogedittext);
-TextView title=(TextView)view.findViewById(R.id.title);
-        title.setText("make new directory in "+currentPath);
+        TextView title=(TextView)view.findViewById(R.id.title);
+        title.setText(getString(R.string.make_directory) + currentPath);
+        final MainActivity activity=this;
+        ab.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.i(BuildConfig.APPLICATION_ID, "will now mkdir");
+                        activity.handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mkdir(currentPath + "/" + et.getText(),activity);
+                                }
+                        });
+                        Toast.makeText(getApplicationContext(), "mkdir " + currentPath + "/" + et.getText(), Toast.LENGTH_SHORT).show();
 
-     ab.setPositiveButton("confirm", new DialogInterface.OnClickListener() {
-         @Override
-         public void onClick(DialogInterface dialog, int which) {
-             Log.e(BuildConfig.APPLICATION_ID, "will now mkdir");
-
-                     Toast.makeText(getApplicationContext(),"mkdir " + currentPath+"/"+et.getText(),Toast.LENGTH_SHORT).show();
-                        mkdir(currentPath+"/"+et.getText());
-
-                 refresh();
-
-             }
-         }
-     );
-     ab.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                    }
+                }
+        );
+        ab.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
          @Override
          public void onClick(DialogInterface dialog, int which) {
              refresh();
@@ -503,13 +532,169 @@ TextView title=(TextView)view.findViewById(R.id.title);
      });
 
         ab.setView(view);
-
-        ad=ab.create();
+        AlertDialog ad=ab.create();
+        ad.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                refresh();
+            }
+        });
         ad.show();
 
     }
 
     public void refresh(MenuItem item) {
         refresh();
+    }
+
+    public void sendSingleFile(String path){
+
+        Intent i= new Intent();
+        ArrayList<Uri> files= new ArrayList<>();
+        files.add(Uri.fromFile(new File(path)));
+        i.putParcelableArrayListExtra(Intent.EXTRA_STREAM,files);
+        i.setType("*/*");
+        i.setAction(Intent.ACTION_SEND_MULTIPLE);
+        startActivity(Intent.createChooser(i,getString(R.string.send_file)));
+
+
+    }
+    public void send(MenuItem item) {
+        ArrayList<Uri> files = new ArrayList<>();
+        for ( String file: selectedFiles){
+
+            files.add(Uri.fromFile(new File(file)));
+        }
+        Intent share = new Intent();
+        share.setAction(Intent.ACTION_SEND_MULTIPLE);
+        share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,files);
+        share.setType("*/*");
+        startActivity(Intent.createChooser(share,getString(R.string.send_files)));
+    }
+
+    public void decompressZipFile(String path) throws IOException {
+        FileInputStream fis= new FileInputStream(path);
+        ZipInputStream zis = new ZipInputStream(fis);
+        ZipEntry ze= zis.getNextEntry();
+        while (ze!=null){
+
+
+            File f= new File(currentPath+"/"+ze.getName());
+
+            File parentfile= f.getParentFile();
+            parentfile.mkdirs();
+
+            if(!f.exists()){
+                f.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(currentPath+"/"+ze.getName());
+            byte [] data = new byte[1024];
+            int length=0;
+            length=zis.read(data,0,1024);
+            fos.write(data,0,length);
+            fos.close();
+            zis.closeEntry();
+            ze=zis.getNextEntry();
+        }
+        zis.close();
+        fis.close();
+    }
+
+    public void createZipFile(String name, final MainActivity activity){
+
+        activity.handler.post(new Runnable() {
+            @Override
+            public void run() {
+                activity.postMessage(activity.getBaseContext().getString(R.string.creating_zip_file));
+            }
+        });
+
+        try {
+            ZipOutputStream zos= new ZipOutputStream(new FileOutputStream(currentPath+"/"+name+".zip"));
+            for ( String file: selectedFiles){
+
+                ZipEntry ze= new ZipEntry(file);
+                FileInputStream fis= new FileInputStream(file);
+
+                zos.putNextEntry(ze);
+                byte []data = new byte[1024];
+                int length;
+                while((length = fis.read(data))>= 0){
+                    zos.write(data,0,length);
+                }
+                zos.closeEntry();
+                fis.close();
+            }
+            zos.close();
+        }catch (FileNotFoundException fnfe){
+            fnfe.printStackTrace();
+        }catch (IOException ioe){
+            ioe.printStackTrace();
+        }
+        activity.handler.post(new Runnable() {
+            @Override
+            public void run() {
+                activity.postMessage(activity.getBaseContext().getString(R.string.done_creating_zip_file));
+                activity.deselectFiles();
+                activity.refresh();
+            }
+        });
+
+
+    }
+
+    public void CreateZipFileClicked(MenuItem item) {
+        AlertDialog.Builder ab= new AlertDialog.Builder(this);
+        View view=getLayoutInflater().inflate(R.layout.create_zip_file_dialog, null);
+        ab.setView(view);
+        final MainActivity activity=this;
+        final EditText et= (EditText)view.findViewById(R.id.input);
+        ab.setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+
+                Thread thread= new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        createZipFile(et.getText().toString(),activity);
+                    }
+                });
+                thread.start();
+            }
+        });
+        ab.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                refresh();
+
+            }
+        });
+        ab.create().show();
+
+    }
+
+
+    public void license(MenuItem item) {
+        InputStream is=  getResources().openRawResource(R.raw.license);
+        String li = "";
+        byte []data= new byte[1024];
+        int length;
+        try {
+            length=is.read(data,0,1024);
+            while(length>0){
+                Log.i(BuildConfig.APPLICATION_ID, li);
+                li+=(new String(data));
+                length=is.read(data,0,1024);
+            }
+        } catch (IOException ioe){
+            ioe.printStackTrace();
+        }
+        AlertDialog.Builder ab= new AlertDialog.Builder(this);
+        TextView tv= new TextView(this);
+        tv.setMovementMethod(new ScrollingMovementMethod());
+        tv.setText(li);
+        ab.setView(tv);
+        ab.create().show();
     }
 }

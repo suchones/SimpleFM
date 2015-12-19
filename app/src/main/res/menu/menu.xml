@@ -2,40 +2,55 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:title="copy selected files here"
+        android:title="@string/copy_selected_files_here"
         android:onClick="copyFiles">
 
     </item>
     <item
-        android:title="move selected files here"
+        android:title="@string/move_selected_files_here"
         android:onClick="moveFiles">
 
 </item>
     <item
-        android:title="delete selected files"
+        android:title="@string/delete_selected_files"
         android:onClick="deleteFiles"
         >
 
     </item>
 
     <item
-        android:title="unselect files"
-        android:onClick="unselectFiles">
+        android:title="@string/deselect_files"
+        android:onClick="deselectFiles">
 
     </item>
 
     <item
-        android:title="make directory"
+        android:title="@string/make_directory"
         android:onClick="mkdir">
 
     </item>
     <item
+        android:title="@string/send_files"
+        android:onClick="send">
 
-        android:title="refresh"
+    </item>
+    <item
+        android:title="@string/make_zip_file"
+        android:onClick="CreateZipFileClicked">
+
+    </item>
+    <item
+
+        android:title="@string/refresh"
         android:onClick="refresh">
 
     </item>
+    <item
 
+        android:title="@string/license"
+        android:onClick="license">
+
+    </item>
 
 
 

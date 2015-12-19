@@ -17,7 +17,7 @@
             android:layout_margin="@dimen/titlebar_margin"
 
             android:layout_height="match_parent"
-            android:text="file preview"
+            android:text="@string/file_preview"
             android:textSize="@dimen/titlebar_textsize"/>
 
     </LinearLayout>
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/move_button"
-            android:text="open"
+            android:text="@string/open"
             android:textColor="@color/black"
             />
         <Button
@@ -50,8 +50,16 @@
             android:id="@+id/deletebutton"
             android:layout_height="wrap_content"
             android:textColor="@color/black"
-            android:text="delete"
+            android:text="@string/delete"
             />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:id="@+id/sendbutton"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:text="@string/send"
+                />
         </LinearLayout>
 
 
